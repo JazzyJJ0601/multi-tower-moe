@@ -33,7 +33,7 @@ See [RESULTS.md](RESULTS.md)
 
 ## Results
 
-The model achieves the following perplexity on benchmark prompts:
+The model achieves the following Perplexity on benchmark prompts:
 - "The quick brown fox jumps over the lazy dog.": 3.47
 - "In the beginning, the universe was created.": 14.82
 - "Machine learning is a subset of artificial intelligence.": 6.54
