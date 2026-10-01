@@ -1,5 +1,7 @@
 # Multi-Tower MoE Benchmark Results
 
+**Status:** Only the base Qwen3-8B perplexity has been measured so far. The multi-tower method has not been run on the real model yet.
+
 This script loads Qwen3-8B from local cache and measures perplexity on sample prompts.
 
 **Command used:** `python3 repos/multi-tower-moe/results/run_real.py`

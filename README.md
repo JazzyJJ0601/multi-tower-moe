@@ -29,6 +29,8 @@ The MoE layer implements a sparse mixture of experts where input tokens are rout
 - `tests/` Unit tests for routing and experts
 - `results/` Benchmark results and analysis
 
+**Measured status:** Only the base Qwen3-8B perplexity has been measured so far. The multi-tower method has not been run on the real model yet.
+
 See [RESULTS.md](RESULTS.md)
 
 ## Results
