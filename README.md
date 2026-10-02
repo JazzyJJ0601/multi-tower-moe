@@ -1,44 +1,60 @@
-# Multi-Tower Mixture of Experts (MoE)
+# Multi-tower MoE from a dense model, without training
 
-A flexible implementation of the Multi-Tower MoE architecture for scalable language models. This project features multiple tower configurations, dynamic routing, and efficient parameter utilization.
+A dense FFN computes all of its neurons for every token. This repo turns each of Qwen3-8B's 36 FFNs into a
+mixture of 64 expert "towers" (192 neurons each) **without any training**, so a token only needs the towers a
+router picks. Two parts are new here:
 
-## Architecture
+- **Clustered towers.** Neurons are grouped by balanced k-means on how they co-activate on calibration text, so
+  neurons that fire together land in the same tower.
+- **Low-rank router.** The router is the layer's own gate/up projections restricted to the top 256 principal
+  directions of the FFN input. It predicts every neuron's output cheaply, with no learned weights, and a tower's
+  score is the sum of its neurons' predicted contributions.
 
-The MoE layer implements a sparse mixture of experts where input tokens are routed to the most relevant expert network. Key features:
+Calibration takes 49 seconds on 16 × 512 WikiText-2 train tokens.
 
-- Multi-tower configuration: Support for heterogeneous expert blocks
-- Soft/Hard routing selection
-- Token-level load balancing
-- Dropout and regularization strategies
+## Result (Qwen3-8B, real model)
 
-## How to Run
+Perplexity on WikiText-2 test (40 windows of 512 tokens), lower is better. Every method computes the same share
+of FFN neurons per token. Dense Qwen3-8B scores **12.03**.
 
-1. Install dependencies:
-   ```bash
-   pip install -e .
-   ```
+| Method | 50% of neurons | 25% of neurons |
+|---|---:|---:|
+| static pruning (same neurons for every token) | 33.04 | 353.0 |
+| random towers + low-rank router | 51.01 | 2,098 |
+| clustered towers + centroid router (usual training-free router) | 170.2 | 39,098 |
+| **clustered towers + low-rank router (this repo)** | **23.42** | **125.5** |
+| per-neuron selection, low-rank predictor (not tower-shaped) | 18.93 | 29.62 |
+| oracle router, random towers (upper bound) | 25.94 | 916.4 |
+| oracle router, clustered towers (upper bound) | 17.37 | 59.67 |
 
-2. Run training:
-   ```bash
-   python src/moe/train.py
-   ```
+At half the FFN neurons the tower MoE scores 23.42, against 33.04 for static pruning and 51.01 for random towers
+with the same router. At a quarter it scores 125.5 against 353.0 for static pruning.
 
-## Project Structure
+**What the numbers say, plainly:**
 
-- `src/moe/` Core MoE layer and training logic
-- `tests/` Unit tests for routing and experts
-- `results/` Benchmark results and analysis
+- **The clustering matters most.** With a perfect router, clustered towers reach 17.37 against 25.94 for random
+  towers at 50%, and 59.67 against 916.4 at 25%.
+- **The low-rank router beats the usual one by far.** The centroid router scores 170.2 on the same towers.
+- **The router leaves quality on the table.** It reaches 23.42, against 17.37 for a perfect router on the same
+  towers. Its 256 directions keep 72% of the input variance.
+- **Picking single neurons is better than picking towers.** Per-neuron selection with the same predictor scores
+  18.93 and 29.62. Towers only pay off if contiguous 192-neuron blocks make the sparse FFN faster than scattered
+  neurons, and this repo doesn't measure speed.
+- **25% is too aggressive.** Every training-free method falls apart there; 125.5 is far from usable.
 
-**Measured status:** Only the base Qwen3-8B perplexity has been measured so far. The multi-tower method has not been run on the real model yet.
+## Limits
 
-See [RESULTS.md](RESULTS.md)
+- This measures **quality, not speed**. Unchosen neurons are masked out of a full dense FFN; there is no sparse
+  kernel here, so no latency or throughput numbers are claimed.
+- The low-rank router costs about 4.9% of the FFN's multiply-adds; the centroid router about 0.2%.
+- One model (Qwen3-8B), one dataset (WikiText-2), 20,480 evaluation tokens. No fine-tuning after conversion.
 
-## Results
+## Run it
 
-The model achieves the following Perplexity on benchmark prompts:
-- "The quick brown fox jumps over the lazy dog.": 3.47
-- "In the beginning, the universe was created.": 14.82
-- "Machine learning is a subset of artificial intelligence.": 6.54
+```bash
+pip install -r requirements.txt
+python results/run_real.py      # writes results/real.json (~3 min on an RTX 3090 Ti)
+python -m pytest -q tests       # clustering, routing and mask tests on a tiny Qwen3
+```
 
-See [RESULTS.md](RESULTS.md) for full benchmark details.
-
+The model path is set in `results/qcommon.py`. Full numbers: [RESULTS.md](RESULTS.md).

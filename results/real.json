@@ -1,0 +1,94 @@
+{
+  "model": "Qwen3-8B",
+  "eval": "wikitext-2 test 40x512",
+  "calib": "wikitext-2 train 16x512",
+  "towers": 64,
+  "neurons_per_tower": 192,
+  "rank": 256,
+  "router_overhead_pct": {
+    "lowrank": 4.86,
+    "centroid": 0.17,
+    "oracle": null,
+    "neuron": 4.86
+  },
+  "var_kept_mean": 0.7221,
+  "calib_seconds": 49,
+  "rows": [
+    {
+      "method": "dense",
+      "keep": 1.0,
+      "ppl": 12.0346
+    },
+    {
+      "method": "static",
+      "keep": 0.5,
+      "ppl": 33.0416
+    },
+    {
+      "method": "random-lowrank",
+      "keep": 0.5,
+      "ppl": 51.0126
+    },
+    {
+      "method": "cluster-centroid",
+      "keep": 0.5,
+      "ppl": 170.2268
+    },
+    {
+      "method": "cluster-lowrank",
+      "keep": 0.5,
+      "ppl": 23.4189
+    },
+    {
+      "method": "neuron-lowrank",
+      "keep": 0.5,
+      "ppl": 18.9267
+    },
+    {
+      "method": "random-oracle",
+      "keep": 0.5,
+      "ppl": 25.9403
+    },
+    {
+      "method": "cluster-oracle",
+      "keep": 0.5,
+      "ppl": 17.3696
+    },
+    {
+      "method": "static",
+      "keep": 0.25,
+      "ppl": 352.9988
+    },
+    {
+      "method": "random-lowrank",
+      "keep": 0.25,
+      "ppl": 2098.2351
+    },
+    {
+      "method": "cluster-centroid",
+      "keep": 0.25,
+      "ppl": 39098.1562
+    },
+    {
+      "method": "cluster-lowrank",
+      "keep": 0.25,
+      "ppl": 125.5188
+    },
+    {
+      "method": "neuron-lowrank",
+      "keep": 0.25,
+      "ppl": 29.6243
+    },
+    {
+      "method": "random-oracle",
+      "keep": 0.25,
+      "ppl": 916.4255
+    },
+    {
+      "method": "cluster-oracle",
+      "keep": 0.25,
+      "ppl": 59.6713
+    }
+  ],
+  "seconds": 146
+}

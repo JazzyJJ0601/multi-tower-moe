@@ -1,1 +1,4 @@
-torch>=2.0.0
+torch>=2.4
+transformers>=4.51
+datasets
+pytest
